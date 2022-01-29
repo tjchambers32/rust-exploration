@@ -10,13 +10,17 @@ const USERNAME: &str = "tjchambers";
 async fn main() -> Result<(), Box<dyn Error>> {
     let url = format!("https://challenge.hsiao.dev/03/u/{USERNAME}/passwords.txt");
 
-    let body: String = reqwest::get(url)
+    let body = reqwest::get(url)
     .await?
     .text()
     .await?;
 
-    //TODOm read https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html
-    let pwds: Vec<&str> = body.split("\n").collect();
+    //TODO read https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html
+    let pwds: Vec<String> = body.split("\n").map(|s| s.to_string()).collect();
+
+
+    // let res: Vec<String> = my_string.split("something").map(|s| s.to_string()).collect();
+
     // println!("{:#?}", pwds);
 
     //TODO figure out how to have a shared count for progress
@@ -24,20 +28,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Make a vector to hold the children which are spawned.
     let mut children = vec![];
-
     for thread_num in 0..NTHREADS {
         //TODO 
         // split pwds into chunks for each thread
         let chunk_size = pwds.len() / NTHREADS;
         let start_index = thread_num * chunk_size;
         let end_index = (thread_num+1) * chunk_size;
-        let pwds_chunk: Vec<&str> = pwds[start_index..end_index].to_vec();
+        let pwds_chunk: Vec<String> = pwds[start_index..end_index].to_vec();
         
         // Spin up another thread
         children.push(thread::spawn(move || {
             println!("this is thread number {}", thread_num);
+            async {
+                let correct_pwd = check_pwds(pwds_chunk)
+                .await
+                .unwrap();
 
-            check_pwds(pwds_chunk);
+                println!("{}", correct_pwd);
+            }
         }));
     }
 
@@ -49,8 +57,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn check_pwds(pwds: Vec<&str>) -> Result<&str, Box<dyn Error>> {
-    let mut found_pwd = "";
+async fn check_pwds(pwds: Vec<String>) -> Result<String, Box<dyn Error>> {
+    let mut found_pwd: String = "".to_string();
     for pwd in pwds {
         let check_pwd_url = format!("https://challenge.hsiao.dev/03/u/{USERNAME}/check/{pwd}");
         let check_body = reqwest::get(check_pwd_url)
