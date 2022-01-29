@@ -18,9 +18,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //TODO read https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html
     let pwds: Vec<String> = body.split("\n").map(|s| s.to_string()).collect();
 
-
-    // let res: Vec<String> = my_string.split("something").map(|s| s.to_string()).collect();
-
     // println!("{:#?}", pwds);
 
     //TODO figure out how to have a shared count for progress
@@ -59,6 +56,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 async fn check_pwds(pwds: Vec<String>) -> Result<String, Box<dyn Error>> {
     let mut found_pwd: String = "".to_string();
+    println!("pwds = {:#?}", pwds);
     for pwd in pwds {
         let check_pwd_url = format!("https://challenge.hsiao.dev/03/u/{USERNAME}/check/{pwd}");
         let check_body = reqwest::get(check_pwd_url)
